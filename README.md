@@ -15,9 +15,7 @@ transport protocol and cluster discovery and Netty for asynchronous event driven
 network application framework.
 
 This extension needs Tcl 8.6, TclOO, TclCurl and
-[rl_json](https://github.com/RubyLane/rl_json) package.
-
-Notice: cratedb-tcl does not support BLOB function.
+[rl_json](https://github.com/RubyLane/rl_json), and tcllib sha1 package.
 
 
 License
@@ -45,6 +43,11 @@ getResultByList
 getResultByDict  
 getColumns  
 getColumnType INDEX  
+getDigest STRING  
+deleteBlob TABLE DIGEST  
+putBlob TABLE DIGEST DATA  
+getBlob TABLE DIGEST  
+isBlobExist TABLE DIGEST  
 
 `prepare` just gets the SQL code and store it to a variable.
 So this mehtod does not send request to server.
@@ -93,6 +96,8 @@ Examples
 
 ## CrateDB
 
+Basic example:
+
     package require CrateDB
 
     set crate [CrateDB new localhost 4200]
@@ -108,6 +113,69 @@ Examples
     }
 
     $crate destroy
+
+BLOB function example:
+
+    package require CrateDB
+
+	set crate [CrateDB new localhost 4200]
+
+	# Creating a table for blobs with a custom blob data path
+	$crate prepare "create blob table myblobs clustered into 3 shards with \
+		        (blobs_path='/tmp/crate_blob_data')"
+	if {[catch {$crate execute} errMsg]} {
+	    puts "Error: $errMsg"
+	}
+
+	# Prepare our content and digest
+	set digest [$crate getDigest "Hello CrateDB"]
+
+	# The blob can now be uploaded by issuing a PUT request
+	if {[catch {$crate putBlob myblobs $digest "Hello CrateDB"} errMsg]} {
+	    puts "Put Blob ERROR: $errMsg"
+	}
+
+	# Pug again, test if a blob already exists
+	if {[catch {$crate putBlob myblobs $digest "Hello CrateDB"} errMsg]} {
+	    puts "Put Blob ERROR: $errMsg"
+	}
+
+	# To determine if a blob exists without downloading it
+	if {[catch {$crate isBlobExist myblobs $digest} errMsg]==0} {
+	    puts "Blob exists!!!"
+	} else {
+	    puts "Blob ERROR: $errMsg"
+	}
+
+	# To download a blob simply use a GET request
+	if {[catch {set content [$crate getBlob myblobs $digest]} errMsg]==0} {
+	    puts "Get Blob: $content"
+	} else {
+	    puts "Get Blob ERROR: $errMsg"
+	}
+
+	# To list all blobs inside a blob table a SELECT statement can be used
+	puts "Query the table to list our blobs:"
+	$crate prepare "select digest, last_modified from blob.myblobs"
+	if {[catch {$crate execute} errMsg]==0} {
+	    set count [$crate getRowCount]
+	    for {set i 0} {$i < $count} {incr i} {
+		puts "digest : [dict get [$crate getResultByDict] digest ]"
+	    }    
+	}
+
+	# To delete a blob simply use a DELETE request
+	if {[catch {$crate deleteBlob myblobs $digest} errMsg]} {
+	    puts "Put Blob ERROR: $errMsg"
+	}
+
+	# Blob tables can be deleted similar to normal tables
+	$crate prepare "drop blob table myblobs"
+	if {[catch {$crate execute} errMsg]} {
+	    puts "Error: $errMsg"
+	}
+
+	$crate destroy
 
 ## TDBC
 
