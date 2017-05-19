@@ -8,6 +8,7 @@ package require Tcl 8.6
 package require TclOO
 package require TclCurl
 package require rl_json
+package require sha1
 
 package provide CrateDB 0.1
 
@@ -267,5 +268,121 @@ oo::class create CrateDB {
           return "set"
        }
     }
-}
 
+    #
+    # Produce an SHA1 over a string value
+    #
+    method getDigest {STRING} {
+        set sha1 [::sha1::sha1 [encoding convertto utf-8 $STRING]]
+        return $sha1
+    }
+
+    #
+    # Delete blob data
+    #
+    method deleteBlob {TABLE DIGEST} {
+        variable bloburl
+        variable curlHandle
+        
+        set bloburl "http://$host:$port/_blobs/$TABLE/$DIGEST"
+        set curlHandle [curl::init]
+        $curlHandle configure -url $bloburl -customrequest DELETE
+        catch { $curlHandle perform } curlErrorNumber
+        if { $curlErrorNumber != 0 } {
+            return -code error [curl::easystrerror $curlErrorNumber]
+        }
+        
+        set responsecode [$curlHandle getinfo responsecode]
+        $curlHandle cleanup
+        
+        if {$responsecode == 204} {
+            return -code ok
+        } elseif {$responsecode == 404} {
+            return -code error "Not Found"
+        } else {
+            return -code error "ERROR"
+        }
+    }
+
+    #
+    # Put blob data
+    #
+    method putBlob {TABLE DIGEST DATA} {
+        variable bloburl
+        variable curlHandle
+        
+        set bloburl "http://$host:$port/_blobs/$TABLE/$DIGEST"
+        set curlHandle [curl::init]
+        $curlHandle configure -url $bloburl -customrequest PUT -postfields $DATA
+        catch { $curlHandle perform } curlErrorNumber
+        if { $curlErrorNumber != 0 } {
+            return -code error [curl::easystrerror $curlErrorNumber]
+        }
+        
+        set responsecode [$curlHandle getinfo responsecode]
+        $curlHandle cleanup
+        
+        if {$responsecode == 201} {
+            return -code ok
+        } elseif {$responsecode == 409} {
+            return -code error "Conflict"
+        } else {
+            return -code error "ERROR"
+        }
+    }
+
+    #
+    # Get blob data
+    #
+    method getBlob {TABLE DIGEST} {
+        variable bloburl
+        variable curlHandle
+        
+        set bloburl "http://$host:$port/_blobs/$TABLE/$DIGEST"  
+        set curlHandle [curl::init]
+        $curlHandle configure -url $bloburl -bodyvar html
+        catch { $curlHandle perform } curlErrorNumber
+        if { $curlErrorNumber != 0 } {
+            return -code error [curl::easystrerror $curlErrorNumber]
+        }
+        
+        set responsecode [$curlHandle getinfo responsecode]
+        $curlHandle cleanup
+        
+        if {$responsecode == 200} {
+            return -code ok $html
+        } elseif {$responsecode == 404} {
+            return -code error "Not Found"
+        } else {
+            return -code error "ERROR"
+        }
+    }
+
+    #
+    # Check blob data exists or not
+    #
+    method isBlobExist {TABLE DIGEST} {
+        variable bloburl
+        variable curlHandle
+        variable headers
+
+        set bloburl "http://$host:$port/_blobs/$TABLE/$DIGEST"
+        set curlHandle [curl::init]
+        $curlHandle configure -url $bloburl -nobody 1
+        catch { $curlHandle perform } curlErrorNumber
+        if { $curlErrorNumber != 0 } {
+            return -code error [curl::easystrerror $curlErrorNumber]
+        }
+
+        set responsecode [$curlHandle getinfo responsecode]
+        $curlHandle cleanup
+
+        if {$responsecode == 200} {
+            return -code ok
+        } elseif {$responsecode == 404} {
+            return -code error "Not Found"
+        } else {
+            return -code error "ERROR"
+        }
+    }
+}
