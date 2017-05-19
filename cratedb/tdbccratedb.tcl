@@ -156,8 +156,8 @@ package provide tdbc::cratedb 0.1
 
         # Got table id, table name and table schema
         $cratedb prepare "SELECT table_schema, \
-                   table_name as name, number_of_shards, number_of_replicas \
-                   from information_schema.tables \
+                   table_name as name, number_of_shards, number_of_replicas, \
+                   blobs_path from information_schema.tables \
                    where table_name like '$pattern' AND \
                    (table_schema != 'information_schema' AND \
                    table_schema != 'pg_catalog' AND table_schema != 'sys')"
