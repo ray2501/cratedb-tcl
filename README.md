@@ -9,13 +9,25 @@ CrateDB is designed for high scalability and includes components from
 Facebook Presto, Apache Lucene, Elasticsearch and Netty.
 
 CrateDB's language is SQL but it uses the document-oriented approach of NoSQL
-style databases. CrateDB uses the SQL parser from Facebook Presto, its own query
-analysis and distributed query engine. Elasticsearch and Lucene is used for the
-transport protocol and cluster discovery and Netty for asynchronous event driven
+style databases.
+CrateDB uses the SQL parser from Facebook [Presto](https://prestodb.io/),
+its own query analysis and distributed query engine.
+[Elasticsearch](https://www.elastic.co/) and
+[Lucene](https://lucene.apache.org/core/) is used for the
+transport protocol and cluster discovery and
+[Netty](https://netty.io/) for asynchronous event driven
 network application framework.
 
-This extension needs Tcl 8.6, TclOO, TclCurl and
-[rl_json](https://github.com/RubyLane/rl_json), and tcllib sha1 package.
+This extension needs Tcl 8.6, TclOO, [TclCurl](http://wiki.tcl.tk/2638),
+[rl_json](https://github.com/RubyLane/rl_json), and
+[tcllib](http://core.tcl.tk/tcllib/) sha1 package.
+
+
+Documentation
+=====
+
+* [CrateDB documentation](https://crate.io/docs/reference/)
+* [Client/Server Protocol](https://crate.io/docs/reference/protocols/index.html)
 
 
 License
@@ -49,7 +61,7 @@ putBlob TABLE DIGEST DATA
 getBlob TABLE DIGEST  
 isBlobExist TABLE DIGEST  
 
-`prepare` just gets the SQL code and store it to a variable.
+`prepare` just gets the SQL code and stores it to a variable.
 So this mehtod does not send request to server.
 
 `param` is used to setup SQL parameter substitution.
