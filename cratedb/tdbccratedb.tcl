@@ -106,7 +106,7 @@ package provide tdbc::cratedb 0.1
 		}
 		-i - -is - -iso - -isol - -isola - -isolat - -isolati -
 		-isolatio - -isolation {
-		    if {$value ne {serializable}} {
+		    if {$value ne {readuncommitted}} {
 			return -code error \
 			    -errorcode [list TDBC FEATURE_NOT_SUPPORTED 0A000 \
 					    CrateDB ISOLATION] \
