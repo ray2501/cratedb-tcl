@@ -18,7 +18,8 @@ transport protocol and cluster discovery and
 [Netty](https://netty.io/) for asynchronous event driven
 network application framework.
 
-This extension needs Tcl 8.6, TclOO, [TclCurl](http://wiki.tcl.tk/2638),
+This extension needs Tcl 8.6, TclOO, [TclCurl](http://wiki.tcl.tk/2638) or 
+[http](http://www.tcl.tk/man/tcl/TclCmd/http.htm),
 [rl_json](https://github.com/RubyLane/rl_json), and
 [tcllib](http://core.tcl.tk/tcllib/) sha1 package.
 

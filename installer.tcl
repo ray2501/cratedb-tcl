@@ -13,11 +13,6 @@ if {[catch {package require tdbc} errMsg]} {
   exit
 }
 
-if {[catch {package require TclCurl} errMsg]} {
-  puts $errMsg
-  exit
-} 
-
 if {[catch {package require rl_json} errMsg]} {
   puts $errMsg
   exit
