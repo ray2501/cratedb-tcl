@@ -9,11 +9,13 @@ package require TclOO
 package require rl_json
 package require sha1
 
-set crateUseTclCurl 1
+namespace eval ::CrateDB {
+    set crateUseTclCurl 1
+}
 
 if {[catch {package require TclCurl}]} {
     package require http
-    set crateUseTclCurl 0
+    set ::CrateDB::crateUseTclCurl 0
 }
 
 package provide CrateDB 0.1
@@ -110,7 +112,7 @@ oo::class create CrateDB {
              rl_json::json set data "args" [rl_json::json new "array" {*}$param_json_array]
         }
 
-        if {$::crateUseTclCurl == 1} {
+        if {$::CrateDB::crateUseTclCurl == 1} {
             set curlHandle [curl::init]
             set headers [list "Content-Type: application/json" "Default-Schema: $schema"]
             $curlHandle configure -url $url -bodyvar html_result -post 1 \
@@ -306,7 +308,7 @@ oo::class create CrateDB {
         variable responsecode
         
         set bloburl "http://$host:$port/_blobs/$TABLE/$DIGEST"
-        if {$::crateUseTclCurl == 1} {
+        if {$::CrateDB::crateUseTclCurl == 1} {
             set curlHandle [curl::init]
             $curlHandle configure -url $bloburl -customrequest DELETE
             catch { $curlHandle perform } curlErrorNumber
@@ -344,7 +346,7 @@ oo::class create CrateDB {
         variable responsecode
         
         set bloburl "http://$host:$port/_blobs/$TABLE/$DIGEST"
-        if {$::crateUseTclCurl == 1} {
+        if {$::CrateDB::crateUseTclCurl == 1} {
             set curlHandle [curl::init]
             $curlHandle configure -url $bloburl -customrequest PUT -postfields $DATA
             catch { $curlHandle perform } curlErrorNumber
@@ -383,7 +385,7 @@ oo::class create CrateDB {
         variable html
         
         set bloburl "http://$host:$port/_blobs/$TABLE/$DIGEST"
-        if {$::crateUseTclCurl == 1} {
+        if {$::CrateDB::crateUseTclCurl == 1} {
             set curlHandle [curl::init]
             $curlHandle configure -url $bloburl -bodyvar html
             catch { $curlHandle perform } curlErrorNumber
@@ -421,7 +423,7 @@ oo::class create CrateDB {
         variable headers
 
         set bloburl "http://$host:$port/_blobs/$TABLE/$DIGEST"
-        if {$::crateUseTclCurl == 1} {
+        if {$::CrateDB::crateUseTclCurl == 1} {
             set curlHandle [curl::init]
             $curlHandle configure -url $bloburl -nobody 1
             catch { $curlHandle perform } curlErrorNumber
