@@ -27,10 +27,11 @@ Tcl extension and TDBC driver for CrateDB database.
 %install
 dir=%buildroot%tcl_noarchdir
 tclsh ./installer.tcl -path $dir
+mv %buildroot%tcl_noarchdir/cratedb %buildroot%tcl_noarchdir/cratedb%version
 
 %files
 %defattr(-,root,root)
-%tcl_noarchdir/cratedb
+%tcl_noarchdir/cratedb%version
 
 %changelog
 
