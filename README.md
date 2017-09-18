@@ -67,7 +67,7 @@ So this mehtod does not send request to server.
 
 `param` is used to setup SQL parameter substitution.
 TYPE supports boolean, string, ip, timestamp, byte, short, integer,
-float, double (and null).
+float, double, geopoint, array (and null).
 
 `execute` is using TclCurl to post our request to CrateDB HTTP Endpoint.
 

@@ -369,7 +369,7 @@ package provide tdbc::cratedb 0.1
 
             # Only accept these types
             if {$type in {string ip timestamp byte short integer long \
-                          float double boolean}} {
+                          float double boolean geopoint array}} {
                 dict set value type $type
             }
         }

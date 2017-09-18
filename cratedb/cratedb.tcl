@@ -60,6 +60,12 @@ oo::class create CrateDB {
         variable param_json_array
         variable curlHandle
         variable tok
+        variable geopoint_list
+        variable geopoint_string
+        variable geopoint_length
+        variable array_list
+        variable array_string
+        variable array_length
 
         set data [rl_json::json new object "stmt" "string \"$sql\""]
         set count [dict size $params]
@@ -100,6 +106,71 @@ oo::class create CrateDB {
                   }
                   "double" {
                      lappend param_json_array "number [lindex $p_index 1]"
+                  }
+                  "geopoint" {
+                     # User should give a list and have double values: <lon_value> <lat_value>
+                     # Then we rewrite to a RL_JSON string
+                     set geopoint_list [lindex $p_index 1]
+                     set geopoint_string "\"array\" "
+                     set geopoint_length [llength $geopoint_list]
+
+                     for {set list_count 0} {$list_count < $geopoint_length} {incr list_count} {
+                       append geopoint_string "\"number [lindex $geopoint_list $list_count]\" "
+                     }
+                     lappend param_json_array $geopoint_string
+                  }
+                  "array" {
+                     # User should give a list, first item is type
+                     # Then we rewrite to a RL_JSON string
+                     set array_list [lindex $p_index 1]
+                     set array_string "\"array\" "
+                     set array_length [llength $array_list]
+
+                     # Check the type
+                     if {[string compare [lindex $array_list 0] "boolean"]==0} {
+                       for {set list_count 1} {$list_count < $array_length} {incr list_count} {
+                         append array_string "\"boolean [lindex $array_list $list_count]\" "
+                       }
+                     } elseif {[string compare [lindex $array_list 0] "string"]==0} {
+                       for {set list_count 1} {$list_count < $array_length} {incr list_count} {
+                         append array_string "\"string \\\"[lindex $array_list $list_count]\\\"\" "
+                       }
+                     } elseif {[string compare [lindex $array_list 0] "ip"]==0} {
+                       for {set list_count 1} {$list_count < $array_length} {incr list_count} {
+                         append array_string "\"string \\\"[lindex $array_list $list_count]\\\"\" "
+                       }
+                     } elseif {[string compare [lindex $array_list 0] "timestamp"]==0} {
+                       for {set list_count 1} {$list_count < $array_length} {incr list_count} {
+                         append array_string "\"string \\\"[lindex $array_list $list_count]\\\"\" "
+                       }
+                     } elseif {[string compare [lindex $array_list 0] "byte"]==0} {
+                       for {set list_count 1} {$list_count < $array_length} {incr list_count} {
+                         append array_string "\"number [lindex $array_list $list_count]\" "
+                       }
+                     } elseif {[string compare [lindex $array_list 0] "short"]==0} {
+                       for {set list_count 1} {$list_count < $array_length} {incr list_count} {
+                         append array_string "\"number [lindex $array_list $list_count]\" "
+                       }
+                     } elseif {[string compare [lindex $array_list 0] "integer"]==0} {
+                       for {set list_count 1} {$list_count < $array_length} {incr list_count} {
+                         append array_string "\"number [lindex $array_list $list_count]\" "
+                       }
+                     } elseif {[string compare [lindex $array_list 0] "float"]==0} {
+                       for {set list_count 1} {$list_count < $array_length} {incr list_count} {
+                         append array_string "\"number [lindex $array_list $list_count]\" "
+                       }
+                     } elseif {[string compare [lindex $array_list 0] "double"]==0} {
+                       for {set list_count 1} {$list_count < $array_length} {incr list_count} {
+                         append array_string "\"number [lindex $array_list $list_count]\" "
+                       }
+                     } else {
+                       # If user not give the known type, then guess it is a string list
+                       for {set list_count 0} {$list_count < $array_length} {incr list_count} {
+                         append array_string "\"string \\\"[lindex $array_list $list_count]\\\"\" "
+                       }
+                     }
+
+                     lappend param_json_array $array_string
                   }
                   "null" {
                      lappend param_json_array "null"
@@ -283,6 +354,8 @@ oo::class create CrateDB {
           return "object"
        } elseif {$type == 13} {
           return "geopoint"
+       } elseif {$type == 14} {
+          return "geoshape"
        } elseif {$type == 100} {
           return "array"
        } elseif {$type == 101} {
