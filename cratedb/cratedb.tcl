@@ -66,6 +66,7 @@ oo::class create CrateDB {
         variable array_list
         variable array_string
         variable array_length
+        variable geo_array_string
 
         set data [rl_json::json new object "stmt" "string \"$sql\""]
         set count [dict size $params]
@@ -163,6 +164,20 @@ oo::class create CrateDB {
                        for {set list_count 1} {$list_count < $array_length} {incr list_count} {
                          append array_string "\"number [lindex $array_list $list_count]\" "
                        }
+                     } elseif {[string compare [lindex $array_list 0] "geopoint"]==0} {
+                       set geo_array_string ""
+                       for {set list_count 1} {$list_count < $array_length} {incr list_count} {
+                         set geopoint_list [lindex $array_list $list_count]
+                         set geopoint_length [llength $geopoint_list]
+
+                         set geopoint_string "\"array\" "
+                         for {set count2 0} {$count2 < $geopoint_length} {incr count2} {
+                           append geopoint_string "\"number [lindex $geopoint_list $count2]\" "
+                         }
+                         lappend geo_array_string $geopoint_string
+                       }
+
+                       append array_string $geo_array_string
                      } else {
                        # If user not give the known type, then guess it is a string list
                        for {set list_count 0} {$list_count < $array_length} {incr list_count} {
