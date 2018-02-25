@@ -11,6 +11,8 @@ Url:            https://github.com/ray2501/cratedb-tcl
 License:        MIT
 Group:          Development/Libraries/Tcl
 BuildArch:      noarch
+BuildRequires:  tcl >= 8.6
+BuildRequires:  rl_json
 Requires:       tcl >= 8.6
 Requires:       tcllib
 BuildRoot:      %{_tmppath}/%{name}-%{version}-build
