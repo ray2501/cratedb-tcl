@@ -15,6 +15,7 @@ BuildRequires:  tcl >= 8.6
 BuildRequires:  rl_json
 Requires:       tcl >= 8.6
 Requires:       tcllib
+Requires:       rl_json
 BuildRoot:      %{_tmppath}/%{name}-%{version}-build
 Source0:        %{name}.tar.gz
 
