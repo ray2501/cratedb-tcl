@@ -18,7 +18,7 @@ if {[catch {package require TclCurl}]} {
     set ::CrateDB::crateUseTclCurl 0
 }
 
-package provide CrateDB 0.1
+package provide CrateDB 0.2
 
 oo::class create CrateDB {
     variable html_result

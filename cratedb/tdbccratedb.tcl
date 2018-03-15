@@ -9,7 +9,7 @@ package require Tcl 8.6
 package require tdbc
 package require CrateDB
 
-package provide tdbc::cratedb 0.1
+package provide tdbc::cratedb 0.2
 
 
 ::namespace eval ::tdbc::cratedb {
