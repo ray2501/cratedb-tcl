@@ -68,6 +68,8 @@ oo::class create CrateDB {
         variable array_length
         variable geo_array_string
 
+        # Try to use string map to escape double quotes for SQL statement
+        set sql [ string map [list {"} {\"}] $sql ]
         set data [rl_json::json new object "stmt" "string \"$sql\""]
         set count [dict size $params]
         if {$count > 0} {
