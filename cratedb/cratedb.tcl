@@ -33,6 +33,7 @@ oo::class create CrateDB {
     variable totalrows
     variable rowcount
     variable row_counter
+    variable typemap
     
     constructor {HOST PORT {SCHEMA "doc"}} {
         set html_result ""
@@ -47,6 +48,13 @@ oo::class create CrateDB {
         set totalrows {}
         set rowcount 0
         set row_counter 0
+
+        # Create a typemap dict
+        set typemap [dict create 0 "null" 1 "notsupported" 2 "byte" \
+               3 "boolean" 4 "string" 5 "ip" 6 "double" \
+               7 "float" 8 "short" 9 "integer" 10 "long" \
+               11 "timestamp" 12 "object" 13 "geopoint" 14 "geoshape"\
+               100 "array" 101 "set" ]
     }
     
     destructor {
@@ -203,22 +211,28 @@ oo::class create CrateDB {
         if {$::CrateDB::crateUseTclCurl == 1} {
             set curlHandle [curl::init]
             set headers [list "Content-Type: application/json" "Default-Schema: $schema"]
-            $curlHandle configure -url $url -bodyvar html_result -post 1 \
+            try {
+                $curlHandle configure -url $url -bodyvar html_result -post 1 \
                           -postfields $data -httpheader $headers 
-            catch { $curlHandle perform } curlErrorNumber
-            if { $curlErrorNumber != 0 } {
-               return -code error [curl::easystrerror $curlErrorNumber]
+                $curlHandle perform
+            } on error {em} {
+                error [curl::easystrerror $em]
+            } finally {
+                $curlHandle cleanup
             }
-            $curlHandle cleanup
         } else {
             set headers [list "Content-Type" "application/json" "Default-Schema" $schema]
-            if {[catch {set tok [http::geturl $url -method POST -headers $headers \
-                                 -query $data]}]} {
-                return -code error "http::geturl failed"
+            try {
+                set tok [http::geturl $url -method POST \
+                     -headers $headers -query $data]
+                set [namespace current]::html_result [http::data $tok]
+            } on error {error} {
+                error "Failed: $error"
+            } finally {
+                if {[info exists tok]==1} {
+                    http::cleanup $tok
+                }
             }
-
-            set [namespace current]::html_result [http::data $tok]
-            http::cleanup $tok
         }
 
         return -code ok
@@ -343,41 +357,7 @@ oo::class create CrateDB {
        }
 
        set type [lindex $col_types $INDEX]
-       if {$type == 0} {
-          return "null"
-       } elseif {$type == 1} {
-          return "notsupported"
-       } elseif {$type == 2} {
-          return "byte"
-       } elseif {$type == 3} {
-          return "boolean"
-       } elseif {$type == 4} {
-          return "string"
-       } elseif {$type == 5} {
-          return "ip"
-       } elseif {$type == 6} {
-          return "double"
-       } elseif {$type == 7} {
-          return "float"
-       } elseif {$type == 8} {
-          return "short"
-       } elseif {$type == 9} {
-          return "integer"
-       } elseif {$type == 10} {
-          return "long"
-       } elseif {$type == 11} {
-          return "timestamp"
-       } elseif {$type == 12} {
-          return "object"
-       } elseif {$type == 13} {
-          return "geopoint"
-       } elseif {$type == 14} {
-          return "geoshape"
-       } elseif {$type == 100} {
-          return "array"
-       } elseif {$type == 101} {
-          return "set"
-       }
+       return [dict get $typemap $type]
     }
 
     #
@@ -400,21 +380,26 @@ oo::class create CrateDB {
         set bloburl "http://$host:$port/_blobs/$TABLE/$DIGEST"
         if {$::CrateDB::crateUseTclCurl == 1} {
             set curlHandle [curl::init]
-            $curlHandle configure -url $bloburl -customrequest DELETE
-            catch { $curlHandle perform } curlErrorNumber
-            if { $curlErrorNumber != 0 } {
-                return -code error [curl::easystrerror $curlErrorNumber]
+            try {
+                $curlHandle configure -url $bloburl -customrequest DELETE
+                $curlHandle perform
+                set responsecode [$curlHandle getinfo responsecode]
+            } on error {em} {
+                error [curl::easystrerror $curlErrorNumber]
+            } finally {
+                $curlHandle cleanup
             }
-
-            set responsecode [$curlHandle getinfo responsecode]
-            $curlHandle cleanup
         } else {
-            if {[catch {set tok [http::geturl $bloburl -method DELETE]}]} {
-                return -code error "http::geturl failed"
+            try {
+                set tok [http::geturl $bloburl -method DELETE]
+                set responsecode [::http::ncode $tok]
+            } on error {em} {
+                error "Failed: $em"
+            } finally {
+                if {[info exists tok]==1} {
+                    http::cleanup $tok
+                }
             }
-
-            set responsecode [::http::ncode $tok]
-            http::cleanup $tok
         }
         
         if {$responsecode == 204} {
@@ -438,21 +423,26 @@ oo::class create CrateDB {
         set bloburl "http://$host:$port/_blobs/$TABLE/$DIGEST"
         if {$::CrateDB::crateUseTclCurl == 1} {
             set curlHandle [curl::init]
-            $curlHandle configure -url $bloburl -customrequest PUT -postfields $DATA
-            catch { $curlHandle perform } curlErrorNumber
-            if { $curlErrorNumber != 0 } {
-                return -code error [curl::easystrerror $curlErrorNumber]
+            try {
+                $curlHandle configure -url $bloburl -customrequest PUT -postfields $DATA
+                $curlHandle perform
+                set responsecode [$curlHandle getinfo responsecode]
+            } on error {em} {
+                error [curl::easystrerror $curlErrorNumber]
+            } finally {
+                $curlHandle cleanup
             }
-
-            set responsecode [$curlHandle getinfo responsecode]
-            $curlHandle cleanup
         } else {
-            if {[catch {set tok [http::geturl $bloburl -method PUT -query $DATA]}]} {
-                return -code error "http::geturl failed"
+            try {
+                set tok [http::geturl $bloburl -method PUT -query $DATA]
+                set responsecode [::http::ncode $tok]
+            } on error {em} {
+                error "Failed: $em"
+            } finally {
+                if {[info exists tok]==1} {
+                    http::cleanup $tok
+                }
             }
-
-            set responsecode [::http::ncode $tok]
-            http::cleanup $tok
         }
         
         if {$responsecode == 201} {
@@ -477,22 +467,26 @@ oo::class create CrateDB {
         set bloburl "http://$host:$port/_blobs/$TABLE/$DIGEST"
         if {$::CrateDB::crateUseTclCurl == 1} {
             set curlHandle [curl::init]
-            $curlHandle configure -url $bloburl -bodyvar html
-            catch { $curlHandle perform } curlErrorNumber
-            if { $curlErrorNumber != 0 } {
-                return -code error [curl::easystrerror $curlErrorNumber]
+            try {
+                $curlHandle configure -url $bloburl -bodyvar html
+                $curlHandle perform
+                set responsecode [$curlHandle getinfo responsecode]
+            } on error {em} {
+                error [curl::easystrerror $curlErrorNumber]
+            } finally {
+                $curlHandle cleanup
             }
-
-            set responsecode [$curlHandle getinfo responsecode]
-            $curlHandle cleanup
         } else {
-            if {[catch {set tok [http::geturl $bloburl -method GET]}]} {
-                return -code error "http::geturl failed"
+            try {
+                set tok [http::geturl $bloburl -method GET]
+                set responsecode [::http::ncode $tok]
+            } on error {em} {
+                error "Failed: $em"
+            } finally {
+                if {[info exists tok]==1} {
+                    http::cleanup $tok
+                }
             }
-
-            set responsecode [::http::ncode $tok]
-            set html [http::data $tok]
-            http::cleanup $tok
         }
         
         if {$responsecode == 200} {
@@ -515,21 +509,26 @@ oo::class create CrateDB {
         set bloburl "http://$host:$port/_blobs/$TABLE/$DIGEST"
         if {$::CrateDB::crateUseTclCurl == 1} {
             set curlHandle [curl::init]
-            $curlHandle configure -url $bloburl -nobody 1
-            catch { $curlHandle perform } curlErrorNumber
-            if { $curlErrorNumber != 0 } {
-                return -code error [curl::easystrerror $curlErrorNumber]
+            try {
+                $curlHandle configure -url $bloburl -nobody 1
+                $curlHandle perform
+                set responsecode [$curlHandle getinfo responsecode]
+            } on error {em} {
+                error [curl::easystrerror $curlErrorNumber]
+            } finally {
+                $curlHandle cleanup
             }
-
-            set responsecode [$curlHandle getinfo responsecode]
-            $curlHandle cleanup
         } else {
-            if {[catch {set tok [http::geturl $bloburl -method HEAD]}]} {
-                return -code error "http::geturl failed"
+            try {
+                set tok [http::geturl $bloburl -method HEAD]
+                set responsecode [::http::ncode $tok]
+            } on error {em} {
+                error "Failed: $em"
+            } finally {
+                if {[info exists tok]==1} {
+                    http::cleanup $tok
+                }
             }
-
-            set responsecode [::http::ncode $tok]
-            http::cleanup $tok
         }
 
         if {$responsecode == 200} {
