@@ -4,7 +4,7 @@
 
 Name:           cratedb-tcl
 BuildRequires:  tcl
-Version:        0.3
+Version:        0.4
 Release:        0
 Summary:        Tcl extension and TDBC driver for CrateDB database
 Url:            https://github.com/ray2501/cratedb-tcl
