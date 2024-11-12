@@ -4,7 +4,7 @@
 #     Crate provides a HTTP Endpoint that can be used to submit SQL queries.
 #
 
-package require Tcl 8.6
+package require Tcl 8.6-
 package require TclOO
 package require rl_json
 package require sha1

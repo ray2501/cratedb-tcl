@@ -5,7 +5,7 @@
 #
 #------------------------------------------------------------------------------
 
-package require Tcl 8.6
+package require Tcl 8.6-
 package require tdbc
 package require CrateDB
 
