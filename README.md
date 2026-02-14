@@ -42,8 +42,9 @@ Implement commands
 
 ## CrateDB
 
-`CrateDB` is a TclOO class, accepts `HOST`, `PORT` and
+`CrateDB` is a TclOO class, accepts `HOST`, `PORT`,
 `SCHEMA` (optional, the default schema is doc)
+and `SSLEnabled` (optional, the default value is disable)
 parameter to create an instance, and has below methods:
 
 httpPost (internal function)  
@@ -78,12 +79,12 @@ So result dict still gets the key but value is empty.
 
 ## TDBC commands
 
-tdbc::cratedb::connection create db host port ?schema? ?-option value...?
+tdbc::cratedb::connection create db host port ?schema? ?SSLEnabled? ?-option value...?
 
 Create a CrateDB database connection handle is established by invoking
 `tdbc::cratedb::connection create`, passing it the name to be used as a
-connection handle, followed by a host name, port number and
-schema name (optional).
+connection handle, followed by a host name, port number,
+schema name (optional) and SSLEnabled flag (optional).
 
 The tdbc::cratedb::connection create object command supports the -encoding, -isolation and
 -readonly option (only gets the default setting).
