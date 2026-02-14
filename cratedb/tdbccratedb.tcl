@@ -33,7 +33,7 @@ package provide tdbc::cratedb 0.4
 
     variable cratedb
 
-    constructor {host port {schema "doc"} args} {
+    constructor {host port {schema "doc"} {SSLEnabled 0} args} {
         next
 
         if {[llength $args] % 2 != 0} {
@@ -43,11 +43,11 @@ package provide tdbc::cratedb 0.4
             "wrong # args, should be \"$cmd ?-option value?...\""
         }
 
-        set cratedb [CrateDB new $host $port $schema]
+        set cratedb [CrateDB new $host $port $schema $SSLEnabled]
 
 
         if {[llength $args] > 0} {
-	    my configure {*}$args
+            my configure {*}$args
         }
     }
 

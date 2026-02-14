@@ -22,6 +22,7 @@ package provide CrateDB 0.4
 
 oo::class create CrateDB {
     variable html_result
+    variable proto
     variable host
     variable port
     variable url
@@ -35,12 +36,29 @@ oo::class create CrateDB {
     variable row_counter
     variable typemap
     
-    constructor {HOST PORT {SCHEMA "doc"}} {
+    constructor {HOST PORT {SCHEMA "doc"} {SSLEnabled 0}} {
         set html_result ""
         set host $HOST
         set port $PORT
         set schema $SCHEMA
-        set url "http://$HOST:$PORT/_sql?types"
+        set proto "http"
+
+        if {$SSLEnabled == 1} {
+            set proto "https"
+
+            if {$::CrateDB::crateUseTclCurl == 0} {
+                if {[catch {package require tls}]==0} {
+                    set protocol "http/1.1"
+                    http::register https 443 [list ::tls::socket -autoservername 1 \
+                                          -require 0 -alpn \
+                                          [list [string tolower $protocol]]]
+                } else {
+                    error "SSLEnabled needs package tls..."
+                }
+            }
+        }
+
+        set url "$proto://$HOST:$PORT/_sql?types"
         set sql ""
         set params [dict create]
         set cols {}
@@ -210,8 +228,14 @@ oo::class create CrateDB {
             set curlHandle [curl::init]
             set headers [list "Content-Type: application/json" "Default-Schema: $schema"]
             try {
-                $curlHandle configure -url $url -bodyvar html_result -post 1 \
-                          -postfields $data -httpheader $headers 
+                if {$proto == "http"} {
+                    $curlHandle configure -url $url -bodyvar html_result -post 1 \
+                          -postfields $data -httpheader $headers
+                } else {
+                    $curlHandle configure -url $url -sslverifyhost 0 -sslverifypeer 0 \
+                          -bodyvar html_result -post 1 \
+                          -postfields $data -httpheader $headers
+                }
                 $curlHandle perform
             } on error {em} {
                 error [curl::easystrerror $em]
@@ -375,11 +399,16 @@ oo::class create CrateDB {
         variable tok
         variable responsecode
         
-        set bloburl "http://$host:$port/_blobs/$TABLE/$DIGEST"
+        set bloburl "$proto://$host:$port/_blobs/$TABLE/$DIGEST"
         if {$::CrateDB::crateUseTclCurl == 1} {
             set curlHandle [curl::init]
             try {
-                $curlHandle configure -url $bloburl -customrequest DELETE
+                if {$proto == "http"} {
+                    $curlHandle configure -url $bloburl -customrequest DELETE
+                } else {
+                    $curlHandle configure -url $bloburl -sslverifyhost 0 -sslverifypeer 0 \
+                        -customrequest DELETE
+                }
                 $curlHandle perform
                 set responsecode [$curlHandle getinfo responsecode]
             } on error {em} {
@@ -418,11 +447,16 @@ oo::class create CrateDB {
         variable tok
         variable responsecode
         
-        set bloburl "http://$host:$port/_blobs/$TABLE/$DIGEST"
+        set bloburl "$proto://$host:$port/_blobs/$TABLE/$DIGEST"
         if {$::CrateDB::crateUseTclCurl == 1} {
             set curlHandle [curl::init]
             try {
-                $curlHandle configure -url $bloburl -customrequest PUT -postfields $DATA
+                if {$proto == "http"} {
+                    $curlHandle configure -url $bloburl -customrequest PUT -postfields $DATA
+                } else {
+                    $curlHandle configure -url $bloburl -sslverifyhost 0 -sslverifypeer 0 \
+                          -customrequest PUT -postfields $DATA
+                }
                 $curlHandle perform
                 set responsecode [$curlHandle getinfo responsecode]
             } on error {em} {
@@ -462,11 +496,16 @@ oo::class create CrateDB {
         variable responsecode
         variable html
         
-        set bloburl "http://$host:$port/_blobs/$TABLE/$DIGEST"
+        set bloburl "$proto://$host:$port/_blobs/$TABLE/$DIGEST"
         if {$::CrateDB::crateUseTclCurl == 1} {
             set curlHandle [curl::init]
             try {
-                $curlHandle configure -url $bloburl -bodyvar html
+                if {$proto == "http"} {
+                    $curlHandle configure -url $bloburl -bodyvar html
+                } else {
+                    $curlHandle configure -url $bloburl -sslverifyhost 0 -sslverifypeer 0 \
+                          -bodyvar html
+                }
                 $curlHandle perform
                 set responsecode [$curlHandle getinfo responsecode]
             } on error {em} {
@@ -504,11 +543,16 @@ oo::class create CrateDB {
         variable curlHandle
         variable headers
 
-        set bloburl "http://$host:$port/_blobs/$TABLE/$DIGEST"
+        set bloburl "$proto://$host:$port/_blobs/$TABLE/$DIGEST"
         if {$::CrateDB::crateUseTclCurl == 1} {
             set curlHandle [curl::init]
             try {
-                $curlHandle configure -url $bloburl -nobody 1
+                if {$proto == "http"} {
+                    $curlHandle configure -url $bloburl -nobody 1
+                } else {
+                    $curlHandle configure -url $bloburl -sslverifyhost 0 -sslverifypeer 0 \
+                          -nobody 1
+                }
                 $curlHandle perform
                 set responsecode [$curlHandle getinfo responsecode]
             } on error {em} {
